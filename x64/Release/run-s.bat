@@ -1,1 +1,0 @@
-regsvr32 /s UAC-Stor.dll 
