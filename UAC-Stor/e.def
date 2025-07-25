@@ -1,0 +1,5 @@
+EXPORTS
+
+DllRegisterServer		PRIVATE
+Shell_RequestShutdownEx	PRIVATE
+FactoryResetUICC	PRIVATE
