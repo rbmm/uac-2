@@ -13,8 +13,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{09B1B15F-7eda-1260-C91D-BB7F61934FC9}</ProjectGuid>
-    <RootNamespace>dae</RootNamespace>
+    <ProjectGuid>{09B1B150-7eda-1269-C91D-BB7F61934FC9}</ProjectGuid>
+    <RootNamespace>ead</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <UserRootDir>$(SolutionDir)MSBuild\v4.0</UserRootDir>
   </PropertyGroup>
@@ -62,7 +62,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="dae.rc" />
+    <ResourceCompile Include="ead.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
