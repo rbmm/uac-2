@@ -72,6 +72,7 @@ NTSTATUS Delete2(PCWSTR pszSrcFile, PCWSTR pszTargetFile)
 	PWSTR pszFileName;
 	HANDLE hFile;
 	IO_STATUS_BLOCK iosb;
+	FILE_BASIC_INFORMATION fbi;
 
 	if (0 <= (status = RtlDosPathNameToNtPathName_U_WithStatus(pszTargetFile, &TargetName, 0, 0)))
 	{
@@ -89,8 +90,22 @@ NTSTATUS Delete2(PCWSTR pszSrcFile, PCWSTR pszTargetFile)
 
 			DbgPrint("FSCTL_REQUEST_OPLOCK_LEVEL_1 = %x\r\n", status);
 
-			if (STATUS_PENDING == status)
+			switch (status)
 			{
+			case STATUS_INVALID_PARAMETER:
+				if (0 > (status = ZwQueryAttributesFile(&oa, &fbi)) ||
+					!(fbi.FileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				{
+					DbgPrint("FileAttributes = %x [%x]\r\n", fbi.FileAttributes, status);
+					break;
+				}
+				DbgPrint("!! FILE_ATTRIBUTE_DIRECTORY !!\r\n");
+				b = TRUE;
+				NtClose(hFile);
+				hFile = 0;
+				[[fallthrough]];
+
+			case STATUS_PENDING:
 				if (0 <= (status = RtlDosPathNameToNtPathName_U_WithStatus(pszSrcFile, &ObjectName, &pszFileName, 0)))
 				{
 					pszFileName[-1] = 0;
@@ -118,12 +133,28 @@ NTSTATUS Delete2(PCWSTR pszSrcFile, PCWSTR pszTargetFile)
 
 								if (0 <= status)
 								{
-									while (!b)
+									if (hFile)
 									{
-										SleepEx(INFINITE, TRUE);
-									}
+										while (!b)
+										{
+											SleepEx(INFINITE, TRUE);
+										}
 
-									DbgPrint("FSCTL_REQUEST_OPLOCK_LEVEL_1 = [%x, %p]\r\n", iosb.Status, iosb.Information);
+										DbgPrint("FSCTL_REQUEST_OPLOCK_LEVEL_1 = [%x, %p]\r\n", iosb.Status, iosb.Information);
+									}
+									else
+									{
+										oa.ObjectName = &TargetName;
+										
+										NTSTATUS s;
+										while (0 <= (s = ZwQueryAttributesFile(&oa, &fbi)))
+										{
+											Sleep(1000);
+										}
+										oa.ObjectName = &ObjectName;
+
+										DbgPrint("s = %x\r\n", s);
+									}
 
 									NtClose(hSymLink);
 								}
@@ -147,9 +178,10 @@ NTSTATUS Delete2(PCWSTR pszSrcFile, PCWSTR pszTargetFile)
 				{
 					SleepEx(INFINITE, TRUE);
 				}
+				break;
 			}
 
-			NtClose(hFile);
+			if (hFile) NtClose(hFile);
 		}
 
 		RtlFreeUnicodeString(&TargetName);
